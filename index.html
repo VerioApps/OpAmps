@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Circuitos de Audio con Op-Amps | Verio Aplicaciones Didácticas</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --cream-light: #FDF8F3;
+            --cream: #F5EDE4;
+            --cream-dark: #E8DDD0;
+            --sage-light: #C5D4C0;
+            --sage: #9BB08F;
+            --sage-dark: #7A9A6D;
+            --terracotta-light: #D4847C;
+            --terracotta: #B85C50;
+            --terracotta-dark: #8B3A30;
+            --wood-light: #D4B896;
+            --wood: #A67B5B;
+            --wood-dark: #6B4423;
+
+            --text-primary: #2C2420;
+            --text-secondary: #5C544D;
+            --text-muted: #8A817A;
+
+            --border: #D4C8BC;
+
+            --shadow-sm: 0 1px 3px rgba(44, 36, 32, 0.08);
+            --shadow-md: 0 4px 12px rgba(44, 36, 32, 0.12);
+            --shadow-lg: 0 8px 24px rgba(44, 36, 32, 0.16);
+            --shadow-3d: 0 4px 0px var(--wood-light), 0 8px 15px rgba(44, 36, 32, 0.1);
+
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 12px;
+            --space-lg: 16px;
+            --space-xl: 24px;
+            --space-2xl: 32px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--cream-light) 0%, var(--cream) 100%);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        h1 { font-size: 18px; font-weight: 700; }
+        h2 { font-size: 16px; font-weight: 600; }
+        h3 { font-size: 14px; font-weight: 600; }
+        small { font-size: 11px; }
+
+        .header {
+            background: linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-dark) 100%);
+            padding: 14px var(--space-xl);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo-text h1 { color: var(--cream-light); }
+        .logo-text span { font-size: 11px; opacity: 0.85; color: var(--cream-light); letter-spacing: 0.5px; }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            min-height: calc(100vh - 60px);
+        }
+
+        .control-panel {
+            background: var(--cream-light);
+            border-right: 1px solid var(--border);
+            padding: var(--space-lg);
+            overflow-y: auto;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+
+        .visualization-panel {
+            padding: var(--space-xl);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xl);
+            overflow-y: auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--cream-dark);
+            padding: 4px;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-lg);
+        }
+        .tab {
+            flex: 1;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background: var(--cream-light);
+            color: var(--terracotta-dark);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .panel-section {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 18px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            margin-bottom: var(--space-md);
+            transition: all 0.3s ease;
+        }
+        .panel-section:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--sage);
+        }
+        .panel-section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed var(--cream-dark);
+        }
+        .panel-section-header h3 { color: var(--text-primary); }
+        .panel-section-header svg { width: 18px; height: 18px; color: var(--terracotta); }
+
+        .form-row { margin-bottom: 16px; }
+        .form-row:last-child { margin-bottom: 0; }
+        .form-row.collapsed { display: none; }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .slider-header label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            transition: background 0.3s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--terracotta);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid white;
+            transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        .slider-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--terracotta);
+            background: var(--cream);
+            padding: 3px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        select.dropdown {
+            width: 100%;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--cream-light);
+            color: var(--text-primary);
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        select.dropdown:focus { border-color: var(--sage); box-shadow: 0 0 0 3px rgba(155, 176, 143, 0.2); }
+
+        .btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--cream-light);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            background: var(--sage-light);
+            color: var(--text-primary);
+            border-color: var(--sage);
+        }
+        .btn.danger {
+            background: var(--terracotta);
+            color: white;
+            border-color: var(--terracotta-dark);
+        }
+        .btn.danger:hover {
+            background: var(--terracotta-dark);
+            color: white;
+        }
+
+        .preset-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .preset-row .btn { flex: 1 1 auto; font-size: 11px; padding: 6px 10px; }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, var(--sage-light) 0%, var(--sage) 100%);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: var(--shadow-3d);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(255,255,255,0.2);
+            min-height: 90px;
+        }
+        .result-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 0px var(--wood-light), 0 12px 20px rgba(44, 36, 32, 0.15);
+        }
+        .result-card.highlight {
+            background: linear-gradient(135deg, var(--terracotta-light) 0%, var(--terracotta) 100%);
+        }
+        .result-card.warn {
+            background: linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-dark) 100%);
+        }
+        .result-label { font-size: 11px; font-weight: 600; color: white; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
+        .result-sub { font-size: 10px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 6px; }
+
+        .chart-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            padding: 24px;
+            height: 320px;
+            position: relative;
+        }
+        .chart-container.tall { height: 380px; }
+        .chart-title-block {
+            position: absolute;
+            top: 18px;
+            left: 24px;
+            z-index: 2;
+        }
+        .chart-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+        .chart-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .chart-canvas-wrap { position: absolute; inset: 60px 24px 18px 24px; }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-lg);
+        }
+        @media (max-width: 1280px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+
+        .svg-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 280px;
+            position: relative;
+        }
+
+        .schematic-led {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .led-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--sage);
+            box-shadow: 0 0 8px var(--sage), inset 0 0 4px rgba(255,255,255,0.4);
+            transition: all 0.25s;
+        }
+        .led-dot.on {
+            background: var(--terracotta);
+            box-shadow: 0 0 14px var(--terracotta-light), inset 0 0 4px rgba(255,255,255,0.4);
+        }
+
+        .formula-section {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .formula-header {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .formula-content {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--terracotta-dark);
+            text-align: center;
+            padding: 12px;
+            background: var(--cream-light);
+            border-radius: var(--radius-sm);
+            border: 1px dashed var(--terracotta-light);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, var(--wood-light) 0%, var(--wood) 100%);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            color: white;
+            font-size: 12px;
+            line-height: 1.6;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), var(--shadow-sm);
+        }
+        .info-box strong { display: block; font-size: 13px; margin-bottom: 6px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 8px;
+            background: var(--cream-dark);
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge.live { background: var(--sage); color: white; }
+        .badge.real { background: var(--wood); color: white; }
+
+        .toolbar-row {
+            display: flex;
+            gap: 8px;
+            margin-top: var(--space-md);
+        }
+        .toolbar-row .btn { flex: 1; }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        .toast {
+            background: var(--text-primary);
+            color: white;
+            padding: 14px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateX(100%);
+            max-width: 360px;
+        }
+        .toast.warning { background: var(--terracotta-dark); border-left: 4px solid var(--cream-light); }
+        .toast.info { background: var(--sage-dark); border-left: 4px solid var(--cream-light); }
+
+        .hidden-view { display: none !important; }
+
+        .signal-path {
+            stroke-dasharray: 8;
+            animation: flow 1s linear infinite;
+        }
+        @keyframes flow { to { stroke-dashoffset: -16; } }
+
+        @media (max-width: 1024px) {
+            .app-container { grid-template-columns: 1fr; }
+            .control-panel { max-height: 50vh; border-right: none; border-bottom: 1px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="header">
+        <div class="logo-text">
+            <h1>Verio Aplicaciones Didácticas</h1>
+            <span>SIMULADOR DE AMPLIFICADORES OPERACIONALES · v1</span>
+        </div>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--cream-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12h4l3-9 5 18 3-9h5"/>
+        </svg>
+    </nav>
+
+    <div class="app-container">
+
+        <aside class="control-panel">
+
+            <div class="tabs">
+                <button class="tab active" data-view="view-opamp">Op-Amp</button>
+                <button class="tab" data-view="view-filter">Filtros Activos</button>
+            </div>
+
+            <div id="controls-opamp">
+                <section class="panel-section">
+                    <div class="panel-section-header">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                        </svg>
+                        <h3>Configuración del Circuito</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="slider-header"><label>Topología</label></div>
+                        <select id="opamp-config" class="dropdown">
+                            <option value="inverting">Amplificador Inversor</option>
+                            <option value="nonInverting">Amplificador No Inversor</option>
+                            <option value="buffer">Seguidor de Tensión (Buffer)</option>
+                            <option value="summer">Sumador Inversor (2 entradas)</option>
+                            <option value="differential">Amplificador Diferencial</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="slider-header"><label>Modelo del Op-Amp</label></div>
+                        <select id="opamp-model" class="dropdown">
+                            <option value="ideal">Ideal (sin limitaciones)</option>
+                            <option value="tl081">TL081 (GBP 4MHz · SR 13V/µs)</option>
+                            <option value="ne5532">NE5532 (GBP 10MHz · SR 9V/µs)</option>
+                            <option value="opa2134">OPA2134 (GBP 8MHz · SR 20V/µs)</option>
+                            <option value="lm741">LM741 (GBP 1MHz · SR 0.5V/µs)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row" data-slider="vin">
+                        <div class="slider-header">
+                            <label>Tensión de Entrada (Vin)</label>
+                            <span class="slider-value" id="val-vin">1.0 V</span>
+                        </div>
+                        <input type="range" id="slider-vin" min="-10" max="10" step="0.1" value="1">
+                    </div>
+
+                    <div class="form-row" data-slider="vin2">
+                        <div class="slider-header">
+                            <label>Tensión de Entrada 2 (V2)</label>
+                            <span class="slider-value" id="val-vin2">0.5 V</span>
+                        </div>
+                        <input type="range" id="slider-vin2" min="-10" max="10" step="0.1" value="0.5">
+                    </div>
+
+                    <div class="form-row" data-slider="rin">
+                        <div class="slider-header">
+                            <label>Resistencia Entrada (Rin/R1)</label>
+                            <span class="slider-value" id="val-rin">1.0 kΩ</span>
+                        </div>
+                        <input type="range" id="slider-rin" min="0.5" max="20" step="0.1" value="1">
+                    </div>
+
+                    <div class="form-row" data-slider="rin2">
+                        <div class="slider-header">
+                            <label>Resistencia Entrada 2 (R2)</label>
+                            <span class="slider-value" id="val-rin2">2.0 kΩ</span>
+                        </div>
+                        <input type="range" id="slider-rin2" min="0.5" max="20" step="0.1" value="2">
+                    </div>
+
+                    <div class="form-row" data-slider="rf">
+                        <div class="slider-header">
+                            <label>Resistencia Feedback (Rf)</label>
+                            <span class="slider-value" id="val-rf">10.0 kΩ</span>
+                        </div>
+                        <input type="range" id="slider-rf" min="0.5" max="50" step="0.5" value="10">
+                    </div>
+
+                    <div class="toolbar-row">
+                        <button class="btn" id="btn-reset-opamp">↺ Reiniciar</button>
+                    </div>
+
+                    <div class="preset-row" id="preset-row">
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <div class="panel-section-header">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 17 9 11 13 15 21 7"/>
+                            <polyline points="14 7 21 7 21 14"/>
+                        </svg>
+                        <h3>Señal de Control (Osciloscopio)</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="slider-header">
+                            <label>Nivel (Pico)</label>
+                            <span class="slider-value" id="val-sig-amp">2.0 V</span>
+                        </div>
+                        <input type="range" id="slider-sig-amp" min="0.1" max="10" step="0.1" value="2">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="slider-header">
+                            <label>Frecuencia</label>
+                            <span class="slider-value" id="val-sig-freq">1.00 kHz</span>
+                        </div>
+                        <input type="range" id="slider-sig-freq" min="1" max="1000" step="1" value="10">
+                    </div>
+                </section>
+
+                <div class="info-box" id="info-opamp">
+                    <strong>💡 Comportamiento</strong>
+                    Cada topología tiene su ecuación de transferencia. El esquemático y la fórmula se actualizan al cambiar la configuración.
+                </div>
+            </div>
+
+            <div id="controls-filter" class="hidden-view">
+                <section class="panel-section">
+                    <div class="panel-section-header">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <h3>Topología y Tipo</h3>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="slider-header"><label>Topología</label></div>
+                        <select id="filter-topology" class="dropdown">
+                            <option value="passive">RC Pasivo (1er orden)</option>
+                            <option value="sallenkey">Sallen-Key (2do orden, activo)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="slider-header"><label>Tipo</label></div>
+                        <select id="filter-type" class="dropdown">
+                            <option value="lowpass">Pasa Bajos</option>
+                            <option value="highpass">Pasa Altos</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="slider-header">
+                            <label>Resistencia (R)</label>
+                            <span class="slider-value" id="val-f-r">10.0 kΩ</span>
+                        </div>
+                        <input type="range" id="slider-f-r" min="1" max="100" step="1" value="10">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="slider-header">
+                            <label>Capacitancia (C)</label>
+                            <span class="slider-value" id="val-f-c">0.010 µF</span>
+                        </div>
+                        <input type="range" id="slider-f-c" min="0.001" max="1" step="0.001" value="0.01">
+                    </div>
+
+                    <div class="form-row" data-filter-slider="av">
+                        <div class="slider-header">
+                            <label>Ganancia en Banda Pasante (Av)</label>
+                            <span class="slider-value" id="val-f-av">1.0 V/V</span>
+                        </div>
+                        <input type="range" id="slider-f-av" min="1" max="20" step="0.1" value="1">
+                    </div>
+
+                    <div class="form-row" data-filter-slider="q">
+                        <div class="slider-header">
+                            <label>Factor Q</label>
+                            <span class="slider-value" id="val-f-q">0.707</span>
+                        </div>
+                        <input type="range" id="slider-f-q" min="0.3" max="5" step="0.01" value="0.707">
+                    </div>
+
+                    <div class="toolbar-row">
+                        <button class="btn" id="btn-reset-filter">↺ Reiniciar</button>
+                    </div>
+
+                    <div class="preset-row">
+                        <button class="btn" data-filter-preset="audio">Audio 1kHz</button>
+                        <button class="btn" data-filter-preset="butter">Butterworth (Q=0.707)</button>
+                        <button class="btn" data-filter-preset="bessel">Bessel (Q=0.577)</button>
+                        <button class="btn" data-filter-preset="cheby">Chebyshev (Q=2)</button>
+                    </div>
+                </section>
+
+                <div class="info-box">
+                    <strong>📉 Frecuencia de Corte (fc)</strong>
+                    En filtros de 2do orden, Q determina el comportamiento alrededor de fc: Q=0.707 es Butterworth , Q&gt;0.707 introduce resonancia, Q&lt;0.707 da respuesta más amortiguada.
+                </div>
+            </div>
+
+        </aside>
+
+        <main class="visualization-panel">
+
+            <div id="view-opamp">
+                <div class="results-grid">
+                    <div class="result-card highlight">
+                        <div>
+                            <div class="result-label">Tensión de Salida</div>
+                            <div class="result-sub">Vout · Riel ±15V</div>
+                        </div>
+                        <div class="result-value" id="display-vout">0.00 V</div>
+                    </div>
+                    <div class="result-card">
+                        <div>
+                            <div class="result-label">Ganancia Av</div>
+                            <div class="result-sub" id="display-av-sub">V/V · dB</div>
+                        </div>
+                        <div class="result-value" id="display-av">−10.0</div>
+                    </div>
+                    <div class="result-card">
+                        <div>
+                            <div class="result-label">Ancho de Banda</div>
+                            <div class="result-sub">f<sub>−3dB</sub> = GBP / |Av|</div>
+                        </div>
+                        <div class="result-value" id="display-bw">∞</div>
+                    </div>
+                </div>
+
+                <div class="svg-container">
+                    <div class="schematic-led">
+                        <span id="led-label">Lineal</span>
+                        <span class="led-dot" id="led-dot"></span>
+                    </div>
+                    <svg id="schematic-svg" width="420" height="260" viewBox="0 0 420 260"></svg>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-title-block">
+                            <div class="chart-title">Función de Transferencia DC</div>
+                            <div class="chart-subtitle">Vout vs Vin · Saturación a ±15V</div>
+                        </div>
+                        <div class="chart-canvas-wrap"><canvas id="dcChart"></canvas></div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title-block">
+                            <div class="chart-title">Osciloscopio · Dominio Temporal <span class="badge live">live</span></div>
+                            <div class="chart-subtitle" id="scope-sub">Vin (verde) · Vout (rojo)</div>
+                        </div>
+                        <div class="chart-canvas-wrap"><canvas id="scopeChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="formula-section">
+                    <div class="formula-header">Ecuación de Transferencia</div>
+                    <div class="formula-content" id="display-formula">Vout = − (Rf / Rin) · Vin</div>
+                </div>
+            </div>
+
+            <div id="view-filter" class="hidden-view">
+
+                <div class="results-grid">
+                    <div class="result-card highlight">
+                        <div>
+                            <div class="result-label">Frecuencia de Corte</div>
+                            <div class="result-sub">fc · punto de −3dB</div>
+                        </div>
+                        <div class="result-value" id="display-fc">1.59 kHz</div>
+                    </div>
+                    <div class="result-card">
+                        <div>
+                            <div class="result-label">Ganancia Banda Pasante</div>
+                            <div class="result-sub" id="display-f-av-sub">V/V · dB</div>
+                        </div>
+                        <div class="result-value" id="display-f-av">1.00</div>
+                    </div>
+                    <div class="result-card" id="card-q">
+                        <div>
+                            <div class="result-label"> Ancho de Banda / Factor Q</div>
+                            <div class="result-sub">Selectividad alrededor de fc</div>
+                        </div>
+                        <div class="result-value" id="display-q">0.707</div>
+                    </div>
+                </div>
+
+                <div class="chart-container tall">
+                    <div class="chart-title-block">
+                        <div class="chart-title">Diagrama de Bode · Magnitud</div>
+                        <div class="chart-subtitle" id="bode-mag-sub">Respuesta en frecuencia</div>
+                    </div>
+                    <div class="chart-canvas-wrap"><canvas id="bodeMagChart"></canvas></div>
+                </div>
+
+                <div class="chart-container tall">
+                    <div class="chart-title-block">
+                        <div class="chart-title">Diagrama de Bode · Fase</div>
+                        <div class="chart-subtitle">Desfasaje de la señal de salida respecto a la entrada</div>
+                    </div>
+                    <div class="chart-canvas-wrap"><canvas id="bodePhaseChart"></canvas></div>
+                </div>
+
+                <div class="formula-section">
+                    <div class="formula-header">Función de Transferencia</div>
+                    <div class="formula-content" id="display-filter-formula">f<sub>c</sub> = 1 / (2π · R · C)</div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        const VCC = 15;
+        const TWO_PI = Math.PI * 2;
+
+        const $ = id => document.getElementById(id);
+        const css = getComputedStyle(document.documentElement);
+        const cssVar = name => css.getPropertyValue(name).trim();
+        const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+        const fmtFreq = hz => hz >= 1e6 ? `${(hz/1e6).toFixed(2)} MHz`
+                          : hz >= 1e3 ? `${(hz/1e3).toFixed(2)} kHz`
+                          : `${hz.toFixed(1)} Hz`;
+
+        const palette = {
+            terracotta: cssVar('--terracotta'),
+            terracottaDark: cssVar('--terracotta-dark'),
+            terracottaSoft: 'rgba(184, 92, 80, 0.14)',
+            sage: cssVar('--sage'),
+            sageDark: cssVar('--sage-dark'),
+            sageSoft: 'rgba(155, 176, 143, 0.22)',
+            wood: cssVar('--wood'),
+            border: cssVar('--border'),
+            text: cssVar('--text-primary'),
+            textSec: cssVar('--text-secondary'),
+            textMuted: cssVar('--text-muted')
+        };
+
+        const opampModels = {
+            ideal:   { name: 'Ideal',   gbp: Infinity, slewRate: Infinity, vos: 0       },
+            tl081:   { name: 'TL081',   gbp: 4e6,      slewRate: 13e6,     vos: 3e-3    },
+            ne5532:  { name: 'NE5532',  gbp: 10e6,     slewRate: 9e6,      vos: 0.5e-3  },
+            opa2134: { name: 'OPA2134', gbp: 8e6,      slewRate: 20e6,     vos: 0.5e-3  },
+            lm741:   { name: 'LM741',   gbp: 1e6,      slewRate: 0.5e6,    vos: 6e-3    }
+        };
+
+        const cfgPresets = {
+            inverting: [
+                { label: '×1',   set: { rin: 10, rf: 10 } },
+                { label: '×10',  set: { rin: 1,  rf: 10 } },
+                { label: '×100', set: { rin: 1,  rf: 100 } }
+            ],
+            nonInverting: [
+                { label: '×2',   set: { rin: 10, rf: 10 } },
+                { label: '×11',  set: { rin: 1,  rf: 10 } },
+                { label: '×101', set: { rin: 1,  rf: 100 } }
+            ],
+            buffer: [],
+            summer: [
+                { label: 'Mezcla 1:1',   set: { rin: 10, rin2: 10, rf: 10 } },
+                { label: 'Pesos 2:1',    set: { rin: 5,  rin2: 10, rf: 10 } }
+            ],
+            differential: [
+                { label: 'Restador 1:1', set: { rin: 10, rin2: 10, rf: 10 } },
+                { label: 'Diferencial ×10', set: { rin: 1, rin2: 1, rf: 10 } }
+            ]
+        };
+
+        const opampDefaults = {
+            inverting:    { vin: 1, vin2: 0.5, rin: 1, rin2: 2, rf: 10 },
+            nonInverting: { vin: 1, vin2: 0.5, rin: 1, rin2: 2, rf: 10 },
+            buffer:       { vin: 1, vin2: 0.5, rin: 1, rin2: 2, rf: 10 },
+            summer:       { vin: 1, vin2: 0.5, rin: 10, rin2: 10, rf: 10 },
+            differential: { vin: 1, vin2: 0.5, rin: 10, rin2: 10, rf: 10 }
+        };
+
+        const cfgMeta = {
+            inverting:    { sliders: ['vin', 'rin', 'rf'],                 title: 'Amplificador Inversor' },
+            nonInverting: { sliders: ['vin', 'rin', 'rf'],                 title: 'Amplificador No Inversor' },
+            buffer:       { sliders: ['vin'],                              title: 'Seguidor de Tensión' },
+            summer:       { sliders: ['vin', 'vin2', 'rin', 'rin2', 'rf'], title: 'Sumador Inversor' },
+            differential: { sliders: ['vin', 'vin2', 'rin', 'rin2', 'rf'], title: 'Amplificador Diferencial' }
+        };
+
+        const dom = {
+            cfg:        $('opamp-config'),
+            model:      $('opamp-model'),
+            vin:        $('slider-vin'),
+            vin2:       $('slider-vin2'),
+            rin:        $('slider-rin'),
+            rin2:       $('slider-rin2'),
+            rf:         $('slider-rf'),
+            sigAmp:     $('slider-sig-amp'),
+            sigFreq:    $('slider-sig-freq'),
+            tagVin:     $('val-vin'),
+            tagVin2:    $('val-vin2'),
+            tagRin:     $('val-rin'),
+            tagRin2:    $('val-rin2'),
+            tagRf:      $('val-rf'),
+            tagSigAmp:  $('val-sig-amp'),
+            tagSigFreq: $('val-sig-freq'),
+
+            vout:       $('display-vout'),
+            av:         $('display-av'),
+            avSub:      $('display-av-sub'),
+            bw:         $('display-bw'),
+            formula:    $('display-formula'),
+            ledDot:     $('led-dot'),
+            ledLabel:   $('led-label'),
+            schematic:  $('schematic-svg'),
+            scopeSub:   $('scope-sub'),
+            presetRow:  $('preset-row'),
+            infoOpamp:  $('info-opamp'),
+
+            fTopology:    $('filter-topology'),
+            fType:        $('filter-type'),
+            fR:           $('slider-f-r'),
+            fC:           $('slider-f-c'),
+            fAv:          $('slider-f-av'),
+            fQ:           $('slider-f-q'),
+            tagFR:        $('val-f-r'),
+            tagFC:        $('val-f-c'),
+            tagFAv:       $('val-f-av'),
+            tagFQ:        $('val-f-q'),
+            fcOut:        $('display-fc'),
+            fAvOut:       $('display-f-av'),
+            qOut:         $('display-q'),
+            cardQ:        $('card-q'),
+            bodeMagSub:   $('bode-mag-sub'),
+            filterFormula:$('display-filter-formula'),
+
+            toasts:     $('toast-container')
+        };
+
+        let dcChart = null;
+        let scopeChart = null;
+        let bodeMagChart = null;
+        let bodePhaseChart = null;
+        let lastSatState = false;
+
+        function readOpampParams() {
+            return {
+                cfg:    dom.cfg.value,
+                model:  opampModels[dom.model.value],
+                vin:    +dom.vin.value,
+                vin2:   +dom.vin2.value,
+                rin:    +dom.rin.value,
+                rin2:   +dom.rin2.value,
+                rf:     +dom.rf.value,
+                sigAmp: +dom.sigAmp.value,
+                sigFreq:+dom.sigFreq.value
+            };
+        }
+
+        function gainAndIdealVout(p) {
+            const { cfg, vin, vin2, rin, rin2, rf } = p;
+            switch (cfg) {
+                case 'inverting':    return { av: -(rf/rin),         vIdeal: -(rf/rin) * vin };
+                case 'nonInverting': return { av: 1 + rf/rin,        vIdeal: (1 + rf/rin) * vin };
+                case 'buffer':       return { av: 1,                 vIdeal: vin };
+                case 'summer':       return { av: -(rf/rin),         vIdeal: -((rf/rin)*vin + (rf/rin2)*vin2) };
+                case 'differential': return { av: rf/rin,            vIdeal: (rf/rin) * (vin2 - vin) };
+            }
+        }
+
+        function formulaFor(p) {
+            const { cfg, vin, vin2, rin, rin2, rf } = p;
+            const f = (n, d=1) => (n/d).toFixed(2);
+            switch (cfg) {
+                case 'inverting':    return `Vout = − (Rf / Rin) · Vin = −(${rf}k/${rin}k) · ${vin}V = ${f(-(rf/rin)*vin)} V`;
+                case 'nonInverting': return `Vout = (1 + Rf / Rin) · Vin = (1 + ${rf}k/${rin}k) · ${vin}V = ${f((1+rf/rin)*vin)} V`;
+                case 'buffer':       return `Vout = Vin = ${vin.toFixed(2)} V    (Av = 1)`;
+                case 'summer':       return `Vout = − Rf · (V1/R1 + V2/R2) = −${rf}k · (${vin}/${rin}k + ${vin2}/${rin2}k)`;
+                case 'differential': return `Vout = (Rf/Rin) · (V2 − V1) = (${rf}k/${rin}k) · (${vin2} − ${vin}) V`;
+            }
+        }
+
+        function refreshSliderVisibility(cfg) {
+            const enabled = new Set(cfgMeta[cfg].sliders);
+            document.querySelectorAll('[data-slider]').forEach(row => {
+                row.classList.toggle('collapsed', !enabled.has(row.dataset.slider));
+            });
+        }
+
+        function refreshPresets(cfg) {
+            const list = cfgPresets[cfg] || [];
+            dom.presetRow.innerHTML = list.map((p, i) =>
+                `<button class="btn" data-preset-idx="${i}">${p.label}</button>`
+            ).join('');
+        }
+
+        function applyPreset(idx) {
+            const cfg = dom.cfg.value;
+            const preset = (cfgPresets[cfg] || [])[idx];
+            if (!preset) return;
+            for (const [k, v] of Object.entries(preset.set)) {
+                if (dom[k]) dom[k].value = v;
+            }
+            recomputeOpAmp();
+        }
+
+        function resetOpamp() {
+            const cfg = dom.cfg.value;
+            const def = opampDefaults[cfg];
+            for (const [k, v] of Object.entries(def)) {
+                if (dom[k]) dom[k].value = v;
+            }
+            dom.sigAmp.value = 2;
+            dom.sigFreq.value = 10;
+            dom.model.value = 'ideal';
+            recomputeOpAmp();
+        }
+
+        function recomputeOpAmp() {
+            const p = readOpampParams();
+
+            dom.tagVin.textContent     = `${p.vin.toFixed(1)} V`;
+            dom.tagVin2.textContent    = `${p.vin2.toFixed(1)} V`;
+            dom.tagRin.textContent     = `${p.rin.toFixed(1)} kΩ`;
+            dom.tagRin2.textContent    = `${p.rin2.toFixed(1)} kΩ`;
+            dom.tagRf.textContent      = `${p.rf.toFixed(1)} kΩ`;
+            dom.tagSigAmp.textContent  = `${p.sigAmp.toFixed(1)} V`;
+            dom.tagSigFreq.textContent = fmtFreq(p.sigFreq * 100);
+
+            const { av, vIdeal } = gainAndIdealVout(p);
+            const saturated = Math.abs(vIdeal) > VCC;
+            const vout = clamp(vIdeal, -VCC, VCC);
+
+            dom.vout.textContent   = `${vout.toFixed(2)} V`;
+            dom.av.textContent     = av.toFixed(2);
+            dom.avSub.textContent  = `${av.toFixed(2)} V/V · ${(20 * Math.log10(Math.abs(av))).toFixed(1)} dB`;
+            dom.bw.textContent     = isFinite(p.model.gbp) && Math.abs(av) > 0
+                ? fmtFreq(p.model.gbp / Math.abs(av))
+                : '∞';
+            dom.formula.textContent = formulaFor(p);
+
+            dom.ledDot.classList.toggle('on', saturated);
+            dom.ledLabel.textContent = saturated ? 'Saturado' : 'Lineal';
+
+            renderSchematic(p, saturated);
+            updateDCChart(p);
+            updateScope(p);
+
+            gsap.fromTo(dom.vout, { scale: 1.08, opacity: 0.85 }, { scale: 1, opacity: 1, duration: 0.25 });
+
+            if (saturated && !lastSatState) {
+                showToast(`⚠️ Saturado a ±${VCC}V — la salida ideal sería ${vIdeal.toFixed(1)}V`, 'warning');
+            }
+            lastSatState = saturated;
+        }
+
+        function renderSchematic(p, saturated) {
+            const fill = saturated ? 'var(--terracotta-light)' : 'var(--cream-light)';
+            const cfg = p.cfg;
+            const svg = (() => {
+                if (cfg === 'inverting')    return svgInverting(fill);
+                if (cfg === 'nonInverting') return svgNonInverting(fill);
+                if (cfg === 'buffer')       return svgBuffer(fill);
+                if (cfg === 'summer')       return svgSummer(fill);
+                if (cfg === 'differential') return svgDifferential(fill);
+                return '';
+            })();
+            dom.schematic.innerHTML = svg;
+        }
+
+        function opampTriangle(x, y, fill, signTop = '−', signBot = '+') {
+            return `
+                <polygon points="${x},${y-50} ${x},${y+50} ${x+90},${y}"
+                         fill="${fill}" stroke="var(--terracotta)" stroke-width="3"/>
+                <text x="${x+10}" y="${y-25}" font-size="16" font-weight="bold" fill="var(--terracotta-dark)">${signTop}</text>
+                <text x="${x+10}" y="${y+35}" font-size="16" font-weight="bold" fill="var(--terracotta-dark)">${signBot}</text>
+            `;
+        }
+
+        function resistor(x1, y1, x2, y2, label) {
+            const cx = (x1+x2)/2, cy = (y1+y2)/2;
+            const horiz = Math.abs(x2-x1) > Math.abs(y2-y1);
+            const w = 38, h = 16;
+            const rx = horiz ? cx - w/2 : cx - h/2;
+            const ry = horiz ? cy - h/2 : cy - w/2;
+            const rw = horiz ? w : h;
+            const rh = horiz ? h : w;
+            return `
+                <path d="M${x1} ${y1} L${x2} ${y2}" stroke="var(--border)" stroke-width="3" fill="none"/>
+                <rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" fill="white" stroke="var(--border)" stroke-width="2"/>
+                <text x="${cx}" y="${cy+4}" font-family="JetBrains Mono" font-size="11" fill="var(--text-secondary)" text-anchor="middle">${label}</text>
+            `;
+        }
+
+        function node(x, y, color = 'var(--sage)', label = '', labelDx = -32) {
+            return `
+                <circle cx="${x}" cy="${y}" r="4" fill="${color}"/>
+                ${label ? `<text x="${x+labelDx}" y="${y+4}" font-family="JetBrains Mono" font-size="12" font-weight="bold" fill="var(--text-primary)">${label}</text>` : ''}
+            `;
+        }
+
+        function svgInverting(fill) {
+            return `
+                <path d="M40 90 L70 90" stroke="var(--sage)" stroke-width="3" class="signal-path" fill="none"/>
+                ${resistor(70, 90, 170, 90, 'Rin')}
+                <path d="M170 90 L210 90" stroke="var(--border)" stroke-width="3" fill="none"/>
+                <path d="M210 170 L260 170 L260 230 L40 230" stroke="var(--border)" stroke-width="3" fill="none"/>
+                ${node(40, 230, 'var(--text-muted)', 'GND')}
+                <path d="M190 90 L190 40 L320 40 L320 130" stroke="var(--wood)" stroke-width="3" class="signal-path" fill="none"/>
+                ${resistor(220, 40, 310, 40, 'Rf')}
+                ${opampTriangle(210, 130, fill, '−', '+')}
+                <path d="M300 130 L390 130" stroke="var(--terracotta)" stroke-width="3" class="signal-path" fill="none"/>
+                ${node(40, 90, 'var(--sage)', 'Vin')}
+                ${node(390, 130, 'var(--terracotta)', 'Vout', 8)}
+            `;
+        }
+
+        function svgNonInverting(fill) {
+            return `
+                <path d="M40 90 L210 90" stroke="var(--sage)" stroke-width="3" class="signal-path" fill="none"/>
+                ${node(40, 90, 'var(--sage)', 'Vin')}
+                ${opampTriangle(210, 130, fill, '+', '−')}
+                <path d="M300 130 L390 130" stroke="var(--terracotta)" stroke-width="3" class="signal-path" fill="none"/>
+                <path d="M210 170 L210 220 L340 220 L340 130" stroke="var(--wood)" stroke-width="3" class="signal-path" fill="none"/>
+                ${resistor(230, 220, 320, 220, 'Rf')}
+                <path d="M210 220 L130 220" stroke="var(--border)" stroke-width="3" fill="none"/>
+                ${resistor(130, 180, 130, 220, 'Rin')}
+                <path d="M130 180 L130 40 L40 40" stroke="var(--border)" stroke-width="3" fill="none"/>
+                ${node(40, 40, 'var(--text-muted)', 'GND')}
+                ${node(390, 130, 'var(--terracotta)', 'Vout', 8)}
+            `;
+        }
+
+        function svgBuffer(fill) {
+            return `
+                <path d="M40 90 L210 90" stroke="var(--sage)" stroke-width="3" class="signal-path" fill="none"/>
+                ${node(40, 90, 'var(--sage)', 'Vin')}
+                ${opampTriangle(210, 130, fill, '+', '−')}
+                <path d="M300 130 L390 130" stroke="var(--terracotta)" stroke-width="3" class="signal-path" fill="none"/>
+                <path d="M340 130 L340 200 L210 200 L210 170" stroke="var(--wood)" stroke-width="3" class="signal-path" fill="none"/>
+                <text x="270" y="218" font-family="JetBrains Mono" font-size="10" fill="var(--text-muted)">realimentación directa</text>
+                ${node(390, 130, 'var(--terracotta)', 'Vout', 8)}
+            `;
+        }
+
+        function svgSummer(fill) {
+            return `
+                <path d="M40 70 L80 70" stroke="var(--sage)" stroke-width="3" class="signal-path" fill="none"/>
+                ${resistor(80, 70, 170, 70, 'R1')}
+                <path d="M170 70 L210 70 L210 110" stroke="var(--border)" stroke-width="3" fill="none"/>
+                ${node(40, 70, 'var(--sage)', 'V1')}
+                <path d="M40 110 L80 110" stroke="var(--sage)" stroke-width="3" class="signal-path" fill="none"/>
+                ${resistor(80, 110, 170, 110, 'R2')}
+                <path d="M170 110 L210 110" stroke="var(--border)" stroke-width="3" fill="none"/>
+                ${node(40, 110, 'var(--sage)', 'V2')}
+                <path d="M210 170 L260 170 L260 230 L40 230" stroke="var(--border)" stroke-width="3" fill="none"/>
+                ${node(40, 230, 'var(--text-muted)', 'GND')}
+                <path d="M210 110 L210 30 L320 30 L320 130" stroke="var(--wood)" stroke-width="3" class="signal-path" fill="none"/>
+                ${resistor(220, 30, 310, 30, 'Rf')}
+                ${opampTriangle(210, 130, fill, '−', '+')}
+                <path d="M300 130 L390 130" stroke="var(--terracotta)" stroke-width="3" class="signal-path" fill="none"/>
+                ${node(390, 130, 'var(--terracotta)', 'Vout', 8)}
+            `;
+        }
+
+        function svgDifferential(fill) {
+            return `
+                <path d="M30 90 L80 90" stroke="var(--sage)" stroke-width="3" class="signal-path" fill="none"/>
+                ${resistor(80, 90, 170, 90, 'R1')}
+                <path d="M170 90 L210 90 L210 110" stroke="var(--border)" stroke-width="3" fill="none"/>
+                ${node(30, 90, 'var(--sage)', 'V1')}
+                <path d="M30 170 L80 170" stroke="var(--sage)" stroke-width="3" class="signal-path" fill="none"/>
+                ${resistor(80, 170, 170, 170, 'R2')}
+                <path d="M170 170 L210 170 L210 150" stroke="var(--border)" stroke-width="3" fill="none"/>
+                ${node(30, 170, 'var(--sage)', 'V2')}
+                <path d="M185 170 L185 195" stroke="var(--border)" stroke-width="3" fill="none"/>
+                ${resistor(185, 195, 185, 240, 'Rg')}
+                <path d="M185 240 L60 240" stroke="var(--border)" stroke-width="3" fill="none"/>
+                ${node(60, 240, 'var(--text-muted)', 'GND')}
+                <path d="M210 90 L210 30 L320 30 L320 130" stroke="var(--wood)" stroke-width="3" class="signal-path" fill="none"/>
+                ${resistor(220, 30, 310, 30, 'Rf')}
+                ${opampTriangle(210, 130, fill, '−', '+')}
+                <path d="M300 130 L390 130" stroke="var(--terracotta)" stroke-width="3" class="signal-path" fill="none"/>
+                ${node(390, 130, 'var(--terracotta)', 'Vout', 8)}
+            `;
+        }
+
+        function buildDCChart() {
+            dcChart = new Chart($('dcChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Vout',
+                            data: [],
+                            borderColor: palette.terracotta,
+                            backgroundColor: palette.terracottaSoft,
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                            tension: 0
+                        },
+                        {
+                            label: 'Operación actual',
+                            data: [],
+                            borderColor: palette.sageDark,
+                            backgroundColor: palette.sageDark,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            showLine: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(44,36,32,0.9)',
+                            callbacks: {
+                                label: c => `Vin=${(+c.parsed.x).toFixed(2)}V → Vout=${(+c.parsed.y).toFixed(2)}V`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            min: -15, max: 15,
+                            title: { display: true, text: 'Vin (V)', color: palette.textSec, font: { family: 'DM Sans', weight: 'bold' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        y: {
+                            min: -16, max: 16,
+                            title: { display: true, text: 'Vout (V)', color: palette.textSec, font: { family: 'DM Sans', weight: 'bold' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDCChart(p) {
+            if (!dcChart) return;
+            const sweep = [];
+            const N = 80;
+            for (let i = 0; i <= N; i++) {
+                const vin = -15 + 30 * i / N;
+                const probe = { ...p, vin };
+                const { vIdeal } = gainAndIdealVout(probe);
+                sweep.push({ x: vin, y: clamp(vIdeal, -VCC, VCC) });
+            }
+            const { vIdeal } = gainAndIdealVout(p);
+            dcChart.data.datasets[0].data = sweep;
+            dcChart.data.datasets[1].data = [{ x: p.vin, y: clamp(vIdeal, -VCC, VCC) }];
+            dcChart.update('none');
+        }
+
+        function buildScopeChart() {
+            scopeChart = new Chart($('scopeChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Vin',
+                            data: [],
+                            borderColor: palette.sage,
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0
+                        },
+                        {
+                            label: 'Vout',
+                            data: [],
+                            borderColor: palette.terracotta,
+                            backgroundColor: palette.terracottaSoft,
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                            tension: 0,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: { display: true, text: 'Tiempo (ms)', color: palette.textSec, font: { family: 'DM Sans', weight: 'bold' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        y: {
+                            min: -18, max: 18,
+                            title: { display: true, text: 'Tensión (V)', color: palette.textSec, font: { family: 'DM Sans', weight: 'bold' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateScope(p) {
+            if (!scopeChart) return;
+            const freq = p.sigFreq * 100;
+            const amp = p.sigAmp;
+            const period = 1 / freq;
+            const cycles = 3;
+            const totalT = cycles * period;
+            const N = 600;
+            const dt = totalT / N;
+            const sr = p.model.slewRate;
+            const { av } = gainAndIdealVout(p);
+
+            const vinPts = new Array(N + 1);
+            const voutPts = new Array(N + 1);
+
+            let voutPrev = 0;
+            for (let i = 0; i <= N; i++) {
+                const t = i * dt;
+                const vin = amp * Math.sin(TWO_PI * freq * t);
+                let voutTarget;
+                if (p.cfg === 'differential') voutTarget = av * (p.vin2 - vin);
+                else if (p.cfg === 'summer')  voutTarget = -((p.rf/p.rin)*vin + (p.rf/p.rin2)*p.vin2);
+                else                          voutTarget = av * vin;
+
+                const ideal = clamp(voutTarget, -VCC, VCC);
+
+                let vout;
+                if (isFinite(sr)) {
+                    const maxStep = sr * dt;
+                    const delta = clamp(ideal - voutPrev, -maxStep, maxStep);
+                    vout = voutPrev + delta;
+                } else {
+                    vout = ideal;
+                }
+                voutPrev = vout;
+
+                const tMs = t * 1000;
+                vinPts[i]  = { x: tMs, y: vin };
+                voutPts[i] = { x: tMs, y: vout };
+            }
+
+            scopeChart.data.datasets[0].data = vinPts;
+            scopeChart.data.datasets[1].data = voutPts;
+            scopeChart.update('none');
+
+            const slewLimited = isFinite(sr) && sr < TWO_PI * freq * Math.min(amp * Math.abs(av), VCC);
+            dom.scopeSub.textContent = slewLimited
+                ? `${p.model.name} · Slew rate limita la respuesta (${(sr/1e6).toFixed(1)} V/µs)`
+                : `${p.model.name} · Vin (verde) · Vout (rojo)`;
+        }
+
+        function readFilterParams() {
+            return {
+                topology: dom.fTopology.value,
+                type:     dom.fType.value,
+                r:        +dom.fR.value,
+                c:        +dom.fC.value,
+                av:       +dom.fAv.value,
+                q:        +dom.fQ.value
+            };
+        }
+
+        function refreshFilterControls(topology) {
+            const showActive = topology === 'sallenkey';
+            document.querySelectorAll('[data-filter-slider]').forEach(row => {
+                const tag = row.dataset.filterSlider;
+                const show = showActive && (tag === 'av' || tag === 'q');
+                row.classList.toggle('collapsed', !show);
+            });
+            dom.cardQ.style.display = showActive ? '' : 'none';
+        }
+
+        function recomputeFilter() {
+            const p = readFilterParams();
+            dom.tagFR.textContent  = `${p.r.toFixed(1)} kΩ`;
+            dom.tagFC.textContent  = `${p.c.toFixed(3)} µF`;
+            dom.tagFAv.textContent = `${p.av.toFixed(1)} V/V`;
+            dom.tagFQ.textContent  = p.q.toFixed(3);
+
+            const fc = 1 / (TWO_PI * (p.r * 1e3) * (p.c * 1e-6));
+            dom.fcOut.textContent = fmtFreq(fc);
+
+            const avDb = 20 * Math.log10(p.av);
+            dom.fAvOut.textContent = p.topology === 'sallenkey'
+                ? `${p.av.toFixed(2)}  ·  ${avDb.toFixed(1)} dB`
+                : `1.00  ·  0.0 dB`;
+            dom.qOut.textContent = p.q.toFixed(3);
+
+            dom.bodeMagSub.textContent = p.topology === 'sallenkey'
+                ? `Sallen-Key 2do orden · ${p.type === 'lowpass' ? 'Pasa Bajos' : 'Pasa Altos'}`
+                : `RC Pasivo 1er orden · ${p.type === 'lowpass' ? 'Pasa Bajos' : 'Pasa Altos'}`;
+
+            dom.filterFormula.innerHTML = formulaForFilter(p, fc);
+            drawBode(p, fc);
+        }
+
+        function formulaForFilter(p, fc) {
+            const fcStr = fmtFreq(fc);
+            if (p.topology === 'passive') {
+                return p.type === 'lowpass'
+                    ? `H(jω) = 1 / (1 + jω·RC) &nbsp; · &nbsp; f<sub>c</sub> = ${fcStr}`
+                    : `H(jω) = jω·RC / (1 + jω·RC) &nbsp; · &nbsp; f<sub>c</sub> = ${fcStr}`;
+            }
+            const numLP = `Av·ω₀²`;
+            const numHP = `Av·s²`;
+            const den = `s² + (ω₀/Q)·s + ω₀²`;
+            return `H(s) = ${p.type === 'lowpass' ? numLP : numHP} / (${den}) &nbsp; · &nbsp; f<sub>c</sub> = ${fcStr} · Q = ${p.q.toFixed(3)}`;
+        }
+
+        function transferFunction(p, f, fc) {
+            const x = f / fc;
+            if (p.topology === 'passive') {
+                if (p.type === 'lowpass') {
+                    const re = 1, im = -x;
+                    const denMag = Math.hypot(1, x);
+                    return { mag: 1 / denMag, phase: Math.atan2(im, re) };
+                } else {
+                    const numRe = 0, numIm = x;
+                    const numMag = x;
+                    const numPhase = Math.PI / 2;
+                    const denMag = Math.hypot(1, x);
+                    const denPhase = Math.atan2(x, 1);
+                    return { mag: numMag / denMag, phase: numPhase - denPhase };
+                }
+            }
+            const real = 1 - x * x;
+            const imag = x / p.q;
+            const denMag = Math.hypot(real, imag);
+            const denPhase = Math.atan2(imag, real);
+            if (p.type === 'lowpass') {
+                return { mag: p.av / denMag, phase: -denPhase };
+            }
+            const numMag = x * x;
+            const numPhase = Math.PI;
+            return { mag: p.av * numMag / denMag, phase: numPhase - denPhase };
+        }
+
+        function buildBodeCharts() {
+            const commonOpts = {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(44,36,32,0.9)',
+                        titleFont: { family: 'DM Sans', size: 12 },
+                        bodyFont: { family: 'JetBrains Mono', size: 12 },
+                        padding: 10,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'logarithmic',
+                        min: 10, max: 100000,
+                        title: { display: true, text: 'Frecuencia (Hz)', color: palette.textSec, font: { family: 'DM Sans', weight: 'bold' } },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    }
+                }
+            };
+
+            bodeMagChart = new Chart($('bodeMagChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Magnitud',
+                            data: [],
+                            borderColor: palette.terracotta,
+                            backgroundColor: palette.terracottaSoft,
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            fill: true,
+                            tension: 0.35
+                        },
+                        {
+                            label: 'fc',
+                            data: [],
+                            borderColor: palette.sageDark,
+                            borderDash: [5, 4],
+                            borderWidth: 1.5,
+                            pointRadius: 0
+                        },
+                        {
+                            label: '−3 dB',
+                            data: [],
+                            borderColor: palette.wood,
+                            borderDash: [3, 4],
+                            borderWidth: 1.5,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    ...commonOpts,
+                    plugins: {
+                        ...commonOpts.plugins,
+                        tooltip: {
+                            ...commonOpts.plugins.tooltip,
+                            callbacks: {
+                                title: items => `${(+items[0].label).toFixed(0)} Hz`,
+                                label: item => `${item.parsed.y.toFixed(2)} dB`
+                            }
+                        }
+                    },
+                    scales: {
+                        ...commonOpts.scales,
+                        y: {
+                            min: -60, max: 30,
+                            title: { display: true, text: 'Magnitud (dB)', color: palette.textSec, font: { family: 'DM Sans', weight: 'bold' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            });
+
+            bodePhaseChart = new Chart($('bodePhaseChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Fase',
+                            data: [],
+                            borderColor: palette.sage,
+                            backgroundColor: palette.sageSoft,
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            fill: true,
+                            tension: 0.35
+                        },
+                        {
+                            label: 'fc',
+                            data: [],
+                            borderColor: palette.sageDark,
+                            borderDash: [5, 4],
+                            borderWidth: 1.5,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    ...commonOpts,
+                    plugins: {
+                        ...commonOpts.plugins,
+                        tooltip: {
+                            ...commonOpts.plugins.tooltip,
+                            callbacks: {
+                                title: items => `${(+items[0].label).toFixed(0)} Hz`,
+                                label: item => `${item.parsed.y.toFixed(1)}°`
+                            }
+                        }
+                    },
+                    scales: {
+                        ...commonOpts.scales,
+                        y: {
+                            min: -210, max: 210,
+                            title: { display: true, text: 'Fase (°)', color: palette.textSec, font: { family: 'DM Sans', weight: 'bold' } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function drawBode(p, fc) {
+            if (!bodeMagChart || !bodePhaseChart) return;
+            const N = 200;
+            const magPts = new Array(N + 1);
+            const phasePts = new Array(N + 1);
+            for (let i = 0; i <= N; i++) {
+                const f = Math.pow(10, 1 + (4 * i) / N);
+                const { mag, phase } = transferFunction(p, f, fc);
+                magPts[i]   = { x: f, y: 20 * Math.log10(Math.max(mag, 1e-9)) };
+                phasePts[i] = { x: f, y: phase * 180 / Math.PI };
+            }
+
+            const mag0 = p.topology === 'sallenkey' ? 20 * Math.log10(p.av) : 0;
+            const ref3dB = mag0 - 3;
+            const fcLineMag   = [{ x: fc, y: -100 }, { x: fc, y: 50 }];
+            const fcLinePhase = [{ x: fc, y: -210 }, { x: fc, y: 210 }];
+            const ref3dBLine  = [{ x: 10, y: ref3dB }, { x: 100000, y: ref3dB }];
+
+            bodeMagChart.data.datasets[0].data   = magPts;
+            bodeMagChart.data.datasets[1].data   = fcLineMag;
+            bodeMagChart.data.datasets[2].data   = ref3dBLine;
+            bodePhaseChart.data.datasets[0].data = phasePts;
+            bodePhaseChart.data.datasets[1].data = fcLinePhase;
+
+            bodeMagChart.update('none');
+            bodePhaseChart.update('none');
+        }
+
+        function applyFilterPreset(name) {
+            switch (name) {
+                case 'audio':  dom.fR.value = 16; dom.fC.value = 0.01; break;
+                case 'butter': dom.fTopology.value = 'sallenkey'; dom.fQ.value = 0.707; dom.fAv.value = 1; break;
+                case 'bessel': dom.fTopology.value = 'sallenkey'; dom.fQ.value = 0.577; dom.fAv.value = 1; break;
+                case 'cheby':  dom.fTopology.value = 'sallenkey'; dom.fQ.value = 2; dom.fAv.value = 1; break;
+            }
+            refreshFilterControls(dom.fTopology.value);
+            recomputeFilter();
+        }
+
+        function resetFilter() {
+            dom.fTopology.value = 'passive';
+            dom.fType.value = 'lowpass';
+            dom.fR.value = 10;
+            dom.fC.value = 0.01;
+            dom.fAv.value = 1;
+            dom.fQ.value = 0.707;
+            refreshFilterControls('passive');
+            recomputeFilter();
+        }
+
+        function showToast(message, type = 'info') {
+            if (dom.toasts.firstChild) dom.toasts.firstChild.remove();
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = message;
+            dom.toasts.appendChild(t);
+            gsap.to(t, { transform: 'translateX(0%)', opacity: 1, duration: 0.4, ease: 'back.out(1.2)' });
+            setTimeout(() => {
+                if (!t.parentElement) return;
+                gsap.to(t, { transform: 'translateX(100%)', opacity: 0, duration: 0.3, onComplete: () => t.remove() });
+            }, 3500);
+        }
+
+        function switchView(viewId, btn) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            const outView = document.querySelector('.visualization-panel > div:not(.hidden-view)');
+            const outCtrl = document.querySelector('.control-panel > div:not(.hidden-view):not(.tabs)');
+
+            gsap.to([outView, outCtrl], {
+                opacity: 0, y: -10, duration: 0.2,
+                onComplete: () => {
+                    outView.classList.add('hidden-view');
+                    outCtrl.classList.add('hidden-view');
+
+                    const view = $(viewId);
+                    const ctrl = $(viewId === 'view-opamp' ? 'controls-opamp' : 'controls-filter');
+                    view.classList.remove('hidden-view');
+                    ctrl.classList.remove('hidden-view');
+
+                    gsap.fromTo([view, ctrl], { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.1 });
+
+                    if (viewId === 'view-filter') recomputeFilter();
+                    else recomputeOpAmp();
+                }
+            });
+        }
+
+        function bindControls() {
+            const opampInputs = [dom.cfg, dom.model, dom.vin, dom.vin2, dom.rin, dom.rin2, dom.rf, dom.sigAmp, dom.sigFreq];
+            const filterInputs = [dom.fTopology, dom.fType, dom.fR, dom.fC, dom.fAv, dom.fQ];
+
+            opampInputs.forEach(el => {
+                const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+                el.addEventListener(evt, () => {
+                    if (el === dom.cfg) {
+                        refreshSliderVisibility(el.value);
+                        refreshPresets(el.value);
+                    }
+                    recomputeOpAmp();
+                });
+            });
+
+            filterInputs.forEach(el => {
+                const evt = el.tagName === 'SELECT' ? 'change' : 'input';
+                el.addEventListener(evt, () => {
+                    if (el === dom.fTopology) refreshFilterControls(el.value);
+                    recomputeFilter();
+                });
+            });
+
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.addEventListener('click', () => switchView(btn.dataset.view, btn));
+            });
+
+            dom.presetRow.addEventListener('click', e => {
+                const idx = e.target?.dataset?.presetIdx;
+                if (idx != null) applyPreset(+idx);
+            });
+
+            $('btn-reset-opamp').addEventListener('click', resetOpamp);
+            $('btn-reset-filter').addEventListener('click', resetFilter);
+
+            document.querySelectorAll('[data-filter-preset]').forEach(b => {
+                b.addEventListener('click', () => applyFilterPreset(b.dataset.filterPreset));
+            });
+        }
+
+        window.addEventListener('load', () => {
+            buildDCChart();
+            buildScopeChart();
+            buildBodeCharts();
+            bindControls();
+            refreshSliderVisibility(dom.cfg.value);
+            refreshPresets(dom.cfg.value);
+            refreshFilterControls(dom.fTopology.value);
+            recomputeOpAmp();
+
+            gsap.from('.header',              { y: -50, opacity: 0, duration: 0.6, ease: 'power2.out' });
+            gsap.from('.control-panel',       { x: -50, opacity: 0, duration: 0.6, delay: 0.2, ease: 'power2.out' });
+            gsap.from('.visualization-panel', { opacity: 0, duration: 0.8, delay: 0.4 });
+        });
+    </script>
+</body>
+</html>
